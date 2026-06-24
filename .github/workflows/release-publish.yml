@@ -123,5 +123,9 @@ jobs:
   publish:
     name: Build and Publish
     needs: [create-tag-and-release]
+    # always() forces GitHub to evaluate this job even when an ancestor job had
+    # a conditional if:. Without it, reusable workflow jobs (uses:) are silently
+    # skipped whenever any job in the dependency chain has a conditional.
+    if: ${{ always() && needs.create-tag-and-release.result == 'success' }}
     uses: ./.github/workflows/use-shared-publish.yml
     secrets: inherit
