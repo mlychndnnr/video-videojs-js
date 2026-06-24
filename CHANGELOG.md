@@ -1,3 +1,10 @@
+## [4.2.5](https://github.com/mlychndnnr/video-videojs-js/compare/v4.2.4...v4.2.5) (2026-06-24)
+
+
+### Bug Fixes
+
+* use always() to force publish job evaluation past conditional dependency ([fd80a34](https://github.com/mlychndnnr/video-videojs-js/commit/fd80a34fffc0123c604d1d0a651a88d6ae4c2e18))
+
 ## [4.2.4](https://github.com/mlychndnnr/video-videojs-js/compare/v4.2.3...v4.2.4) (2026-06-24)
 
 
