@@ -68,9 +68,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Remove git plugin from node_modules
-        run: rm -rf node_modules/@semantic-release/git || true
-
       - name: Run build
         run: npm run build
 
@@ -87,23 +84,38 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx semantic-release --dry-run
 
-      - name: Analyze and prepare release [NEW]
-        id: analyze
+      - name: Generate prepare-only release config
+        if: github.event.inputs.dry-run != 'true'
+        run: |
+          # Exclude @semantic-release/git (would push to protected branch) and
+          # @semantic-release/github (Stage 2 handles tagging and GitHub releases).
+          # Keep: commit-analyzer, release-notes-generator, changelog, npm (npmPublish:false)
+          jq '.plugins |= map(select(
+            if type == "array" then
+              .[0] != "@semantic-release/git" and .[0] != "@semantic-release/github"
+            else
+              . != "@semantic-release/git" and . != "@semantic-release/github"
+            end
+          ))' .releaserc.json > .releaserc-prepare.json
+          echo "Prepare-only config generated:"
+          cat .releaserc-prepare.json
+
+      - name: Analyze and prepare release
+        id: check-version
         if: github.event.inputs.dry-run != 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "STEP: Analyze and prepare release"
           CURRENT_VERSION=$(jq -r '.version' package.json)
           echo "Current version: $CURRENT_VERSION"
 
-          # Run semantic-release to analyze commits and update files
-          # It will fail at git push due to branch protection, which is OK
-          npx semantic-release 2>&1 | tee semantic-output.log || true
+          # Run semantic-release with prepare-only config.
+          # Updates package.json, package-lock.json, and CHANGELOG.md locally
+          # without committing, pushing, or creating a GitHub release.
+          npx semantic-release --config .releaserc-prepare.json 2>&1 | tee semantic-output.log || true
 
-          # Check if version was bumped
           NEW_VERSION=$(jq -r '.version' package.json)
-          echo "New version after semantic-release: $NEW_VERSION"
+          echo "New version: $NEW_VERSION"
 
           if [ "$NEW_VERSION" != "$CURRENT_VERSION" ]; then
             echo "new-release-published=true" >> $GITHUB_OUTPUT
@@ -113,12 +125,6 @@ jobs:
             echo "new-release-published=false" >> $GITHUB_OUTPUT
             echo "No version change detected"
           fi
-
-      - name: Check version change
-        id: check-version
-        run: |
-          echo "new-release-published=${{ steps.analyze.outputs.new-release-published }}" >> $GITHUB_OUTPUT
-          echo "new-release-version=${{ steps.analyze.outputs.new-release-version }}" >> $GITHUB_OUTPUT
 
       - name: Create or update release PR
         id: create-pr
@@ -154,7 +160,7 @@ jobs:
             git checkout -b "$BRANCH"
 
             # Verify files were updated and commit them
-            if ! git diff-index --quiet HEAD; then
+            if [ -n "$(git status --porcelain)" ]; then
               # Stage all changes made by semantic-release
               git add -A
 
