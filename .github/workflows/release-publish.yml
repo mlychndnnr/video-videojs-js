@@ -122,6 +122,6 @@ jobs:
 
   publish:
     name: Build and Publish
-    needs: [check-release, create-tag-and-release]
+    needs: [create-tag-and-release]
     uses: ./.github/workflows/use-shared-publish.yml
     secrets: inherit
