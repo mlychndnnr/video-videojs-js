@@ -2,7 +2,7 @@ name: Release Publish
 
 # Stage 2: Triggered on every push to master.
 # If package.json version differs from the latest git tag, creates the tag,
-# publishes to npm + S3 via use-shared-publish.yml, and creates a GitHub Release.
+# triggers use-shared-publish.yml (npm + S3), and creates a GitHub Release.
 
 on:
   push:
@@ -17,6 +17,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
   id-token: write
 
 concurrency:
@@ -63,7 +64,7 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
   create-tag-and-release:
-    name: Tag and GitHub Release
+    name: Tag, Release and Publish
     needs: check-release
     if: needs.check-release.outputs.should-publish == 'true'
     runs-on: ubuntu-latest
@@ -112,6 +113,13 @@ jobs:
             echo "Created GitHub Release $TAG"
           fi
 
+      - name: Trigger Build and Publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run use-shared-publish.yml --ref master
+          echo "Triggered use-shared-publish.yml"
+
       - name: Summary
         run: |
           VERSION="${{ needs.check-release.outputs.version }}"
@@ -121,13 +129,3 @@ jobs:
           echo "**Tag**: [v$VERSION](https://github.com/${{ github.repository }}/releases/tag/v$VERSION)" >> $GITHUB_STEP_SUMMARY
           echo "**npm**: [@newrelic/video-videojs@$VERSION](https://www.npmjs.com/package/@newrelic/video-videojs/v/$VERSION)" >> $GITHUB_STEP_SUMMARY
           echo "**S3**: \`media-agents/browser/videojs\`" >> $GITHUB_STEP_SUMMARY
-
-  publish:
-    name: Build and Publish
-    needs: [create-tag-and-release]
-    # always() forces GitHub to evaluate this job even when an ancestor job had
-    # a conditional if:. Without it, reusable workflow jobs (uses:) are silently
-    # skipped whenever any job in the dependency chain has a conditional.
-    if: ${{ always() && needs.create-tag-and-release.result == 'success' }}
-    uses: ./.github/workflows/use-shared-publish.yml
-    secrets: inherit
