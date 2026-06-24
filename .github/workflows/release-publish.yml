@@ -123,6 +123,5 @@ jobs:
   publish:
     name: Build and Publish
     needs: [check-release, create-tag-and-release]
-    if: needs.check-release.outputs.should-publish == 'true'
     uses: ./.github/workflows/use-shared-publish.yml
     secrets: inherit
