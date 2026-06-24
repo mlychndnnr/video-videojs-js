@@ -1,3 +1,10 @@
+## [4.2.4](https://github.com/mlychndnnr/video-videojs-js/compare/v4.2.3...v4.2.4) (2026-06-24)
+
+
+### Bug Fixes
+
+* remove check-release from publish job needs to prevent silent skip ([76f5e81](https://github.com/mlychndnnr/video-videojs-js/commit/76f5e817953471119a7192ccdda57fae2550c362))
+
 ## [4.2.3](https://github.com/mlychndnnr/video-videojs-js/compare/v4.2.2...v4.2.3) (2026-06-24)
 
 
