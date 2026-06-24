@@ -55,8 +55,10 @@ jobs:
 
           if [ "$VERSION" != "$LATEST_TAG" ]; then
             echo "should-publish=true" >> $GITHUB_OUTPUT
+            echo "New release detected: $VERSION (latest tag: ${LATEST_TAG:-none})"
           else
             echo "should-publish=false" >> $GITHUB_OUTPUT
+            echo "No new release: $VERSION already tagged"
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
