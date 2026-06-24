@@ -1,3 +1,11 @@
+## [4.2.2](https://github.com/mlychndnnr/video-videojs-js/compare/v4.2.1...v4.2.2) (2026-06-24)
+
+
+### Bug Fixes
+
+* fix two bugs preventing Stage 1 from detecting version changes ([fb9c34a](https://github.com/mlychndnnr/video-videojs-js/commit/fb9c34a32a1c488303125288a76b155f3c1e5136))
+* remove redundant if condition from publish reusable workflow job ([62b3848](https://github.com/mlychndnnr/video-videojs-js/commit/62b3848f37f0ef2035ec455b63ebc3a5832946c5))
+
 ## [4.2.1](https://github.com/newrelic/video-videojs-js/compare/v4.2.0...v4.2.1) (2026-06-18)
 
 ### Features
