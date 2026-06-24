@@ -49,6 +49,9 @@ jobs:
       - name: Fetch all tags
         run: git fetch --tags --force
 
+      - name: Sync local master with remote
+        run: git pull --ff-only origin master
+
       - name: Setup git branch tracking
         run: git branch -u origin/master master
 
