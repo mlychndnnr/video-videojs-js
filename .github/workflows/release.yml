@@ -94,14 +94,16 @@ jobs:
           # semantic-release has no --config flag; it always reads .releaserc.json.
           # Excludes @semantic-release/git (would push to protected branch) and
           # @semantic-release/github (Stage 2 handles tagging and GitHub releases).
+          # Back up original so we can restore it after — prevents .releaserc.json
+          # from being committed in the release PR.
+          cp .releaserc.json .releaserc.json.bak
           jq '.plugins |= map(select(
             if type == "array" then
               .[0] != "@semantic-release/git" and .[0] != "@semantic-release/github"
             else
               . != "@semantic-release/git" and . != "@semantic-release/github"
             end
-          ))' .releaserc.json > .releaserc-prepare.json
-          mv .releaserc-prepare.json .releaserc.json
+          ))' .releaserc.json.bak > .releaserc.json
           echo "Prepare-only config:"
           cat .releaserc.json
 
@@ -120,6 +122,9 @@ jobs:
           npx semantic-release \
             --repository-url "https://github.com/${{ github.repository }}.git" \
             2>&1 | tee semantic-output.log || true
+
+          # Restore original .releaserc.json so it is not included in the release commit
+          cp .releaserc.json.bak .releaserc.json
 
           NEW_VERSION=$(jq -r '.version' package.json)
           echo "New version: $NEW_VERSION"
@@ -168,8 +173,9 @@ jobs:
 
             # Verify files were updated and commit them
             if [ -n "$(git status --porcelain)" ]; then
-              # Stage all changes made by semantic-release
-              git add -A
+              # Stage only the files semantic-release is expected to update.
+              # Avoids accidentally committing .releaserc.json, logs, etc.
+              git add package.json package-lock.json CHANGELOG.md
 
               # Commit the changes
               git commit -m "chore(release): v$VERSION - Automated version bump and changelog update"
