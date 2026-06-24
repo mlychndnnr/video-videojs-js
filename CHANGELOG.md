@@ -1,3 +1,10 @@
+## [4.2.7](https://github.com/mlychndnnr/video-videojs-js/compare/v4.2.6...v4.2.7) (2026-06-24)
+
+
+### Bug Fixes
+
+* dispatch use-shared-publish.yml instead of calling it as a reusable job ([#15](https://github.com/mlychndnnr/video-videojs-js/issues/15)) ([6caf0e2](https://github.com/mlychndnnr/video-videojs-js/commit/6caf0e2420992461196edfc337d7c9e3a81baad1))
+
 ## [4.2.6](https://github.com/mlychndnnr/video-videojs-js/compare/v4.2.5...v4.2.6) (2026-06-24)
 
 
