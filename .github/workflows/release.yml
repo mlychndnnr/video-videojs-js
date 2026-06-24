@@ -85,14 +85,15 @@ jobs:
         if: github.event.inputs.dry-run == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx semantic-release --dry-run
+        run: npx semantic-release --dry-run --repository-url "https://github.com/${{ github.repository }}.git"
 
       - name: Generate prepare-only release config
         if: github.event.inputs.dry-run != 'true'
         run: |
-          # Exclude @semantic-release/git (would push to protected branch) and
+          # Overwrite .releaserc.json with a prepare-only version.
+          # semantic-release has no --config flag; it always reads .releaserc.json.
+          # Excludes @semantic-release/git (would push to protected branch) and
           # @semantic-release/github (Stage 2 handles tagging and GitHub releases).
-          # Keep: commit-analyzer, release-notes-generator, changelog, npm (npmPublish:false)
           jq '.plugins |= map(select(
             if type == "array" then
               .[0] != "@semantic-release/git" and .[0] != "@semantic-release/github"
@@ -100,8 +101,9 @@ jobs:
               . != "@semantic-release/git" and . != "@semantic-release/github"
             end
           ))' .releaserc.json > .releaserc-prepare.json
-          echo "Prepare-only config generated:"
-          cat .releaserc-prepare.json
+          mv .releaserc-prepare.json .releaserc.json
+          echo "Prepare-only config:"
+          cat .releaserc.json
 
       - name: Analyze and prepare release
         id: check-version
@@ -112,10 +114,12 @@ jobs:
           CURRENT_VERSION=$(jq -r '.version' package.json)
           echo "Current version: $CURRENT_VERSION"
 
-          # Run semantic-release with prepare-only config.
-          # Updates package.json, package-lock.json, and CHANGELOG.md locally
-          # without committing, pushing, or creating a GitHub release.
-          npx semantic-release --config .releaserc-prepare.json 2>&1 | tee semantic-output.log || true
+          # --repository-url overrides package.json which points to the upstream
+          # newrelic repo. Without this, semantic-release compares against the
+          # wrong remote and exits early with "local branch is behind".
+          npx semantic-release \
+            --repository-url "https://github.com/${{ github.repository }}.git" \
+            2>&1 | tee semantic-output.log || true
 
           NEW_VERSION=$(jq -r '.version' package.json)
           echo "New version: $NEW_VERSION"
