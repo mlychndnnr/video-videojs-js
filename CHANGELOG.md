@@ -1,3 +1,10 @@
+## [4.2.3](https://github.com/mlychndnnr/video-videojs-js/compare/v4.2.2...v4.2.3) (2026-06-24)
+
+
+### Bug Fixes
+
+* restore .releaserc.json and prevent it from being committed in release PRs ([ed8b48e](https://github.com/mlychndnnr/video-videojs-js/commit/ed8b48ea091fd691ded2e3d5a9f85a457fca9765))
+
 ## [4.2.2](https://github.com/mlychndnnr/video-videojs-js/compare/v4.2.1...v4.2.2) (2026-06-24)
 
 
