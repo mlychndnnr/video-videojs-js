@@ -1,3 +1,10 @@
+## [4.2.6](https://github.com/mlychndnnr/video-videojs-js/compare/v4.2.5...v4.2.6) (2026-06-24)
+
+
+### Bug Fixes
+
+* improve check-release logging to show version comparison detail ([56bbc0e](https://github.com/mlychndnnr/video-videojs-js/commit/56bbc0e25a2f6c28b7d51401ea953eb5063e59e9))
+
 ## [4.2.5](https://github.com/mlychndnnr/video-videojs-js/compare/v4.2.4...v4.2.5) (2026-06-24)
 
 
