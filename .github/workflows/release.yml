@@ -34,10 +34,17 @@ jobs:
       new-release-published: ${{ steps.check-version.outputs.new-release-published }}
       new-release-version: ${{ steps.check-version.outputs.new-release-version }}
       pr-number: ${{ steps.create-pr.outputs.pr_number }}
-    # Run on push to master or manual dispatch. Skip the bot's own release commit.
+    # Run on push to master or manual dispatch.
+    # Skip commits that start with "chore(release):" — those are the bot's own
+    # release PR merges. If Stage 1 runs on those commits, semantic-release's core
+    # publish phase pushes the version tag a second time, which causes Stage 2's
+    # check-release to see package.json version == latest tag and skip publishing.
+    # Stage 2 is the sole owner of tag creation; Stage 1 must not interfere.
     if: |
       github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'push' && !contains(github.event.head_commit.message, '[skip ci]'))
+      (github.event_name == 'push' &&
+       !contains(github.event.head_commit.message, '[skip ci]') &&
+       !startsWith(github.event.head_commit.message, 'chore(release):'))
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -92,10 +99,17 @@ jobs:
         run: |
           # Overwrite .releaserc.json with a prepare-only version.
           # semantic-release has no --config flag; it always reads .releaserc.json.
-          # Excludes @semantic-release/git (would push to protected branch) and
-          # @semantic-release/github (Stage 2 handles tagging and GitHub releases).
-          # Back up original so we can restore it after — prevents .releaserc.json
-          # from being committed in the release PR.
+          #
+          # IMPORTANT: We strip ALL publish-phase plugins to prevent semantic-release
+          # from creating and pushing the git tag. Even without @semantic-release/git
+          # and @semantic-release/github, semantic-release's core publish phase still
+          # creates and pushes the version tag to the remote. If that tag is pushed
+          # here (Stage 1), Stage 2's check-release will always find the tag matching
+          # package.json and skip publishing.
+          #
+          # Strategy: run semantic-release in --dry-run mode to determine the next
+          # version and generate release notes, then apply file changes manually
+          # using npm version and changelog tools. This ensures no tag is pushed.
           cp .releaserc.json .releaserc.json.bak
           jq '.plugins |= map(select(
             if type == "array" then
@@ -130,6 +144,18 @@ jobs:
           echo "New version: $NEW_VERSION"
 
           if [ "$NEW_VERSION" != "$CURRENT_VERSION" ]; then
+            # semantic-release's core publish phase unconditionally pushes the git
+            # tag (e.g. v4.2.6) to the remote — this is not controlled by any plugin.
+            # Stripping @semantic-release/git and @semantic-release/github only
+            # prevents the release commit and the GitHub Release; the version tag
+            # is still pushed by the core. That premature tag causes Stage 2's
+            # check-release to always see package.json version == latest tag and
+            # skip publishing on every subsequent run. Delete it here so Stage 2
+            # remains the sole owner of tag creation (after the PR merges).
+            git push origin --delete "v$NEW_VERSION" 2>/dev/null || true
+            git tag -d "v$NEW_VERSION" 2>/dev/null || true
+            echo "Cleaned up premature tag v$NEW_VERSION — Stage 2 will re-create it after PR merges"
+
             echo "new-release-published=true" >> $GITHUB_OUTPUT
             echo "new-release-version=$NEW_VERSION" >> $GITHUB_OUTPUT
             echo "Version change detected: $CURRENT_VERSION → $NEW_VERSION"
