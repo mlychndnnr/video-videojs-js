@@ -1,3 +1,10 @@
+# [4.3.0](https://github.com/mlychndnnr/video-videojs-js/compare/v4.2.8...v4.3.0) (2026-06-28)
+
+
+### Features
+
+* redention name depricated ([#21](https://github.com/mlychndnnr/video-videojs-js/issues/21)) ([4afbb2f](https://github.com/mlychndnnr/video-videojs-js/commit/4afbb2fa66ff629e5355bfd6ccf321fcb08896a0))
+
 ## [4.2.8](https://github.com/mlychndnnr/video-videojs-js/compare/v4.2.7...v4.2.8) (2026-06-28)
 
 
