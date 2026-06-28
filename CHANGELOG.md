@@ -1,3 +1,10 @@
+## [4.2.8](https://github.com/mlychndnnr/video-videojs-js/compare/v4.2.7...v4.2.8) (2026-06-28)
+
+
+### Bug Fixes
+
+* removed e2e file ([#18](https://github.com/mlychndnnr/video-videojs-js/issues/18)) ([7d17038](https://github.com/mlychndnnr/video-videojs-js/commit/7d17038799a079e6fb08c718e285f7e716453eec))
+
 ## [4.2.7](https://github.com/mlychndnnr/video-videojs-js/compare/v4.2.6...v4.2.7) (2026-06-24)
 
 
