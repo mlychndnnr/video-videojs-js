@@ -18,7 +18,6 @@ on:
 permissions:
   contents: write
   actions: write
-  id-token: write
 
 concurrency:
   group: release-publish

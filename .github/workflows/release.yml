@@ -18,9 +18,7 @@ on:
 
 permissions:
   contents: write
-  issues: write
   pull-requests: write
-  id-token: write
 
 concurrency:
   group: release-prepare
@@ -56,12 +54,6 @@ jobs:
       - name: Fetch all tags
         run: git fetch --tags --force
 
-      - name: Sync local master with remote
-        run: git pull --ff-only origin master
-
-      - name: Setup git branch tracking
-        run: git branch -u origin/master master
-
       - name: Setup git
         run: |
           git config user.name "github-actions[bot]"
@@ -72,21 +64,8 @@ jobs:
         with:
           node-version: '24.x'
 
-      - name: Clean npm cache to remove stale packages
-        run: npm cache clean --force
-
       - name: Install dependencies
         run: npm ci
-
-      - name: Run build
-        run: npm run build
-
-      - name: Verify .releaserc.json exists
-        run: |
-          if [ ! -f .releaserc.json ]; then
-            echo "Error: .releaserc.json not found."
-            exit 1
-          fi
 
       - name: Run semantic-release (Dry Run)
         if: github.event.inputs.dry-run == 'true'
@@ -97,19 +76,9 @@ jobs:
       - name: Generate prepare-only release config
         if: github.event.inputs.dry-run != 'true'
         run: |
-          # Overwrite .releaserc.json with a prepare-only version.
           # semantic-release has no --config flag; it always reads .releaserc.json.
-          #
-          # IMPORTANT: We strip ALL publish-phase plugins to prevent semantic-release
-          # from creating and pushing the git tag. Even without @semantic-release/git
-          # and @semantic-release/github, semantic-release's core publish phase still
-          # creates and pushes the version tag to the remote. If that tag is pushed
-          # here (Stage 1), Stage 2's check-release will always find the tag matching
-          # package.json and skip publishing.
-          #
-          # Strategy: run semantic-release in --dry-run mode to determine the next
-          # version and generate release notes, then apply file changes manually
-          # using npm version and changelog tools. This ensures no tag is pushed.
+          # Strip @semantic-release/git (would push directly to protected master) and
+          # @semantic-release/github (Stage 2 owns tag creation and GitHub Releases).
           cp .releaserc.json .releaserc.json.bak
           jq '.plugins |= map(select(
             if type == "array" then
@@ -118,8 +87,6 @@ jobs:
               . != "@semantic-release/git" and . != "@semantic-release/github"
             end
           ))' .releaserc.json.bak > .releaserc.json
-          echo "Prepare-only config:"
-          cat .releaserc.json
 
       - name: Analyze and prepare release
         id: check-version
@@ -208,21 +175,16 @@ jobs:
 
               # Push the branch with the commit
               git push -u origin "$BRANCH"
-              sleep 2
 
-              # Create PR using simple gh CLI
-              echo "Creating PR for branch $BRANCH to base master..."
               set +e
               PR_CREATE_OUTPUT=$(gh pr create \
                 --title "chore(release): v$VERSION" \
                 --body "Automated release PR - Version $VERSION: package.json, package-lock.json, and CHANGELOG.md updated. Review and merge to trigger automated publishing." \
                 --base master \
                 --head "$BRANCH" 2>&1)
-              PR_CREATE_EXIT=$?
               set -e
 
               echo "PR Create Output: $PR_CREATE_OUTPUT"
-              echo "Exit Code: $PR_CREATE_EXIT"
 
               # Extract PR number from the output (format: https://github.com/owner/repo/pull/NUMBER)
               PR_NUMBER=$(echo "$PR_CREATE_OUTPUT" | grep -oP 'pull/\K[0-9]+' | head -1)
