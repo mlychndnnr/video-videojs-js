@@ -1,3 +1,10 @@
+# [4.4.0](https://github.com/mlychndnnr/video-videojs-js/compare/v4.3.1...v4.4.0) (2026-06-29)
+
+
+### Features
+
+* redention added ([#26](https://github.com/mlychndnnr/video-videojs-js/issues/26)) ([f53e10c](https://github.com/mlychndnnr/video-videojs-js/commit/f53e10cba197dd62214347e80e45ad77ee7ed61c))
+
 ## [4.3.1](https://github.com/mlychndnnr/video-videojs-js/compare/v4.3.0...v4.3.1) (2026-06-28)
 
 
